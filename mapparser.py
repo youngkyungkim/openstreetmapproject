@@ -14,6 +14,7 @@ import xml.etree.cElementTree as ET
 import pprint
 
 def count_tags(filename):
+    '''make a dictionary for different types and values of elements to check the consistency of values of element.'''
     tags = {}
     n=0
     for event, elem in ET.iterparse(filename):
@@ -27,21 +28,6 @@ def count_tags(filename):
 
     return tags
         # YOUR CODE HERE
-
-def count_street(filename):
-    tags = {}
-    for event, elem in ET.iterparse(filename):
-        for sub in elem:
-            if sub.tag == "tag":
-                if sub.attrib['k'] == "addr:street":
-                    if elem.tag in tags:
-                        tags[sub.attrib['v']] += 1
-                    else:
-                        tags[sub.attrib['v']] = 1
-    return tags
-
-def test():
-
 #    tags = count_tags('sample3.osm')
     tags = count_street('sample3.osm')
     pprint.pprint(tags)

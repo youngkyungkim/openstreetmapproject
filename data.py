@@ -163,6 +163,7 @@ import xml.etree.cElementTree as ET
 import cerberus
 
 import schema
+from audit import audit
 
 OSM_PATH = "phoenix_arizona.osm"
 
@@ -200,119 +201,6 @@ WAY_FIELDS = ['id', 'user', 'uid', 'version', 'changeset', 'timestamp']
 WAY_TAGS_FIELDS = ['id', 'key', 'value', 'type']
 WAY_NODES_FIELDS = ['id', 'node_id', 'position']
 
-def is_street_name(elem):
-    return (elem.tag == "tag") and (elem.attrib['k'] == "addr:street")
-
-def is_post_code(elem):
-    return (elem.tag == "tag") and (elem.attrib['k'] == "addr:postcode")
-
-def is_state_name(elem):
-    return (elem.tag == "tag") and (elem.attrib['k'] == "addr:state")
-
-def is_fax(elem):
-    return (elem.tag == "tag") and (elem.attrib['k'] == "fax")
-
-def is_phone(elem):
-    return (elem.tag == "tag") and (elem.attrib['k'] == "phone")
-
-def audit(elem):
-    if is_street_name(elem):
-        if elem.attrib['v'] not in expected:
-            for keys in mapping.keys():
-                if keys in elem.attrib['v']:
-                    elem.attrib['v'] = re.sub(keys, mapping[keys], elem.attrib['v'])
-                    return elem.attrib['v']
-            else:
-                return elem.attrib['v']
-        else:
-            return elem.attrib['v']
-
-    elif is_post_code(elem):
-        m = postal_check.search(elem.attrib['v'])
-        if m:
-            if "-" in elem.attrib['v']:
-                name = elem.attrib['v'].split("-")
-                elem.attrib['v'] = name[0]
-                return elem.attrib['v']
-
-            else:
-                name = elem.attrib['v'].split(" ")
-                elem.attrib['v'] = name[1]
-                return elem.attrib['v']
-        else:
-            return elem.attrib['v']
-
-    elif is_state_name(elem):
-        if elem.attrib['v'] == "Arizona":
-            elem.attrib['v'] = "AZ"
-            return elem.attrib['v']
-        else:
-            return elem.attrib['v']
-
-
-    elif is_fax(elem):
-        if "+" in elem.attrib['v']:
-            elem.attrib['v'] = elem.attrib['v'].replace("+1-", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("+1 ", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("+1", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("1 ", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("1", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("+ ", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("+", "")
-#            elem.attrib['v'] = re.sub("+", "", elem.attrib['v'])
-            if " " in elem.attrib['v']:
-                elem.attrib['v'] = re.sub(" ", "-", elem.attrib['v'])
-                return elem.attrib['v']
-            else:
-                return elem.attrib['v']
-        elif "(" in elem.attrib['v']:
-            elem.attrib['v'] = elem.attrib['v'].replace("(", "")
-            elem.attrib['v'] = elem.attrib['v'].replace(")", "")
-#            elem.attrib['v'] = re.sub("(", "", elem.attrib['v'])
-#            elem.attrib['v'] = re.sub(")", "", elem.attrib['v'])
-            if " " in elem.attrib['v']:
-                elem.attrib['v'] = re.sub(" ", "-", elem.attrib['v'])
-                return elem.attrib['v']
-            else:
-                return elem.attrib['v']
-        elif " " in elem.attrib['v']:
-            elem.attrib['v'] = re.sub(" ", "-", elem.attrib['v'])
-            return elem.attrib['v']
-        else:
-            return elem.attrib['v']
-
-    elif is_phone(elem):
-        if "+" in elem.attrib['v']:
-            elem.attrib['v'] = elem.attrib['v'].replace("+1-", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("+1 ", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("+1", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("1 ", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("1", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("+ ", "")
-            elem.attrib['v'] = elem.attrib['v'].replace("+", "")
-#            elem.attrib['v'] = re.sub("+", "", elem.attrib['v'])
-            if " " in elem.attrib['v']:
-                elem.attrib['v'] = re.sub(" ", "-", elem.attrib['v'])
-                return elem.attrib['v']
-            else:
-                return elem.attrib['v']
-        elif "(" in elem.attrib['v']:
-            elem.attrib['v'] = elem.attrib['v'].replace("(", "")
-            elem.attrib['v'] = elem.attrib['v'].replace(")", "")
-#            elem.attrib['v'] = re.sub("(", "", elem.attrib['v'])
-#            elem.attrib['v'] = re.sub(")", "", elem.attrib['v'])
-            if " " in elem.attrib['v']:
-                elem.attrib['v'] = re.sub(" ", "-", elem.attrib['v'])
-                return elem.attrib['v']
-            else:
-                return elem.attrib['v']
-        elif " " in elem.attrib['v']:
-            elem.attrib['v'] = re.sub(" ", "-", elem.attrib['v'])
-            return elem.attrib['v']
-        else:
-            return elem.attrib['v']
-    else:
-        return elem.attrib['v']
 
 
 def shape_element(element, node_attr_fields=NODE_FIELDS, way_attr_fields=WAY_FIELDS,
@@ -331,7 +219,7 @@ def shape_element(element, node_attr_fields=NODE_FIELDS, way_attr_fields=WAY_FIE
                 node_attribs[key] = element.attrib[key]
         for sub in element:
             if sub.tag == "tag":
-                sub.attrib['v'] = audit(sub)
+                sub.attrib['v'] = audit.audit(sub)
                 if problem_chars.match(sub.attrib['k']) is not None:
                     continue
                 elif ":" not in sub.attrib['k']:
@@ -349,7 +237,7 @@ def shape_element(element, node_attr_fields=NODE_FIELDS, way_attr_fields=WAY_FIE
         n = 0
         for sub in element:
             if sub.tag == "tag":
-                sub.attrib['v'] = audit(sub)
+                sub.attrib['v'] = audit.audit(sub)
                 if problem_chars.match(sub.attrib['k']) is not None:
                     continue
                 elif ":" in sub.attrib['k']:

@@ -229,3 +229,35 @@ select nodes.timestamp from nodes, nodes_tags where nodes.id=nodes_tags.id and n
 Maybe there might have been some building related to religion in 2014 but have changed into malls and hospital.
 
 From this I learned that we should check the timestamp or the day it was edited before using the data because the older the dates are there is a more chance of data being inaccurate.
+
+Therefore, before using a data we should look at timestamp of the data through using a sql as below.
+
+```sql
+select timestamp from nodes order by timestamp limit 20;
+```
+2006-08-12T23:48:13Z
+2007-12-29T04:02:39Z
+2007-12-29T04:04:46Z
+2007-12-29T04:04:46Z
+2007-12-30T08:04:54Z
+2007-12-30T19:36:34Z
+2007-12-30T19:36:34Z
+2007-12-30T19:36:34Z
+2007-12-30T19:36:34Z
+2007-12-30T19:36:38Z
+2007-12-31T00:12:45Z
+2007-12-31T00:39:43Z
+2007-12-31T00:43:21Z
+2007-12-31T00:43:21Z
+2007-12-31T00:43:21Z
+2007-12-31T00:43:21Z
+2007-12-31T00:43:21Z
+2007-12-31T00:43:21Z
+2007-12-31T01:01:55Z
+2007-12-31T01:10:16Z
+From looking at the sql above we have data that is almost 10 years old. We should "where" method in sql to use recent data. For example we could set "where timestamp > 2014" to use only data that has been fixed after 2014.
+
+The benefit of doing this would be that we could avoid using obsolete data. However, the challenges is that whether timestamp is the best variable in deciding the data is obsolete or not.
+
+It is possible that nothing had changed in the location through numerous years.
+However, from looking at different variables in the database I do not think there is a better variable than timestamp that could indicate whether data is obsolete or not, so I think using timestamp has more benefit than challenge, especially when we are aware of the possible challenge. 

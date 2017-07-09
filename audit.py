@@ -36,37 +36,28 @@ mapping = { "St": "Street",
 
 
 
-def audit_street_type(street_types, street_name):
-    m = street_type_re.search(street_name)
-    if m:
-        street_type = m.group()
-
-        street_types[street_type] += 1
-
-def print_sorted_dict(d):
-    keys = d.keys()
-    keys = sorted(keys, key=lambda s: s.lower())
-    for k in keys:
-        v = d[k]
-        print "%s: %d" % (k, v)
-
-
 def is_street_name(elem):
+    ''' check whether the element is street type'''
     return (elem.tag == "tag") and (elem.attrib['k'] == "addr:street")
 
 def is_post_code(elem):
+    ''' check whether the element is postal code'''
     return (elem.tag == "tag") and (elem.attrib['k'] == "addr:postcode")
 
 def is_state_name(elem):
+    ''' check whether the element is state name'''
     return (elem.tag == "tag") and (elem.attrib['k'] == "addr:state")
 
 def is_fax(elem):
+    ''' check whether the element is a number'''
     return (elem.tag == "tag") and (elem.attrib['k'] == "fax")
 
 def is_phone(elem):
+    ''' check whether the element is a number'''
     return (elem.tag == "tag") and (elem.attrib['k'] == "phone")
 
 def audit(elem):
+    ''' check the type of element's value of "v" and update the value to make values consistent.'''
     if is_street_name(elem):
         if elem.attrib['v'] not in expected:
             for keys in mapping.keys():
@@ -165,30 +156,6 @@ def audit(elem):
     else:
         return elem.attrib['v']
 
-
-
-def update_name(name, mapping):
-    m = street_type_re.search(name)
-    if m.group() not in expected:
-        if m.group() in mapping.keys():
-            name = re.sub(m.group(), mapping[m.group()], name)
-    return name
-
-
-
-def test():
-    st_types = audit(OSMFILE)
-    assert len(st_types) == 3
-    pprint.pprint(dict(st_types))
-
-    for st_type, ways in st_types.iteritems():
-        for name in ways:
-            better_name = update_name(name, mapping)
-            print name, "=>", better_name
-            if name == "West Lexington St.":
-                assert better_name == "West Lexington Street"
-            if name == "Baldwin Rd.":
-                assert better_name == "Baldwin Road"
 
 
 if __name__ == '__main__':
